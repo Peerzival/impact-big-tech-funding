@@ -85,20 +85,16 @@ def rank_funding_agencies(excel_path, output_path, threshold=85):
     result_df.to_excel(output_path, index=False)
     print(f"Results saved to {output_path}")
 
-def calculate_similarities(chunk_scb_pair):
+
+def calculate_similarities(chunk_scb_pair, threshold):
     """Calculate similarities for a chunk of WOS data and all SCB data"""
     chunk, scb_df = chunk_scb_pair
     matches = []
     for _, wos_row in chunk.iterrows():
         for _, scb_row in scb_df.iterrows():
             similarity = fuzz.ratio(wos_row['item_title'], scb_row['item_title'])
-            if similarity >= SIMILARITY_THRESHOLD:
-                matches.append((
-                    wos_row['id'],
-                    wos_row['item_title'],
-                    scb_row['item_title'],
-                    similarity
-                ))
+            if similarity >= threshold:
+                matches.append((wos_row['id'], wos_row['item_title'], scb_row['item_title'], similarity))
     return matches
 
 def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=80, chunk_size=10000):
@@ -112,9 +108,6 @@ def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=80, chunk_size=10
     threshold (int): Similarity threshold for matching (0-100)
     chunk_size (int): Number of rows to process at a time
     """
-    global SIMILARITY_THRESHOLD
-    SIMILARITY_THRESHOLD = threshold
-    
     # Read the SCB file entirely
     scb_df = pd.read_csv(scb_file)
     
@@ -126,9 +119,12 @@ def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=80, chunk_size=10
     chunks = pd.read_csv(wos_file, chunksize=chunk_size)
     chunk_scb_pairs = [(chunk, scb_df) for chunk in chunks]
     
+    # Create a partial function with the threshold value
+    partial_calculate_similarities = partial(calculate_similarities, threshold=threshold)
+    
     # Process chunks in parallel
     matches = []
-    for chunk_matches in tqdm(pool.imap(calculate_similarities, chunk_scb_pairs), 
+    for chunk_matches in tqdm(pool.imap(partial_calculate_similarities, chunk_scb_pairs), 
                               desc=f"Processing chunks using {num_cores} cores"):
         matches.extend(chunk_matches)
     
@@ -146,12 +142,9 @@ def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=80, chunk_size=10
     result_df.to_csv(output_file, index=False)
     print(f"Matching results saved to {output_file}")
 
-
-
 # Usage example
 if __name__ == "__main__":
-    scb_file = "/Users/max/Desktop/scb_b_202401_funded_venue_items_18_24_202408191802.csv"
-    wos_file = "/Users/max/Desktop/wos_202401_funded_items_18_24_202408191803.csv"
-    output_file = "/Users/max/Desktop/matched_items.csv"
-    
+    scb_file = r"c:\Users\Anwender\Desktop\scb_b_202401_funded_venue_items_18_24_202408191802.csv"
+    wos_file = r"c:\Users\Anwender\Desktop\wos_202401_funded_items_18_24_202408191803.csv"
+    output_file = r"c:\Users\Anwender\Desktop\matched_items.csv"
     fuzzy_match_csv(scb_file, wos_file, output_file, threshold=96)
