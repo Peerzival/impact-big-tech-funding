@@ -2,6 +2,8 @@ import pandas as pd
 from fuzzywuzzy import fuzz
 import re
 from tqdm import tqdm
+import multiprocessing as mp
+from functools import partial
 
 def find_funding_agencies(excel_path, output_path, threshold=90):
     print(f"Reading the Excel file from {excel_path}")
@@ -83,9 +85,25 @@ def rank_funding_agencies(excel_path, output_path, threshold=85):
     result_df.to_excel(output_path, index=False)
     print(f"Results saved to {output_path}")
 
-def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=90, chunk_size=10000):
+def calculate_similarities(chunk_scb_pair):
+    """Calculate similarities for a chunk of WOS data and all SCB data"""
+    chunk, scb_df = chunk_scb_pair
+    matches = []
+    for _, wos_row in chunk.iterrows():
+        for _, scb_row in scb_df.iterrows():
+            similarity = fuzz.ratio(wos_row['item_title'], scb_row['item_title'])
+            if similarity >= SIMILARITY_THRESHOLD:
+                matches.append((
+                    wos_row['id'],
+                    wos_row['item_title'],
+                    scb_row['item_title'],
+                    similarity
+                ))
+    return matches
+
+def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=80, chunk_size=10000):
     """
-    Perform fuzzy matching between two CSV files and save the results.
+    Perform fuzzy matching between two CSV files using multi-core processing and save the results.
     
     Args:
     scb_file (str): Path to the SCB CSV file
@@ -94,39 +112,29 @@ def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=90, chunk_size=10
     threshold (int): Similarity threshold for matching (0-100)
     chunk_size (int): Number of rows to process at a time
     """
-    print(f"Reading the SCB file from {scb_file}")
-    # Read the SCB file entirely (assuming it's smaller)
+    global SIMILARITY_THRESHOLD
+    SIMILARITY_THRESHOLD = threshold
+    
+    # Read the SCB file entirely
     scb_df = pd.read_csv(scb_file)
     
-    # Initialize an empty list to store matches
-    matches = []
+    # Initialize the multiprocessing pool
+    num_cores = mp.cpu_count()
+    pool = mp.Pool(num_cores)
     
-    # Process the WOS file in chunks
-    print(f"Processing the WOS file in chunks of {chunk_size} rows")
-    for chunk in tqdm(pd.read_csv(wos_file, chunksize=chunk_size), desc="Processing chunks"):
-        # Perform cartesian product between chunk and scb_df
-        cross = pd.MultiIndex.from_product([chunk.index, scb_df.index])
-        
-        # Calculate similarity scores
-        similarities = [fuzz.ratio(chunk.loc[i, 'item_title'], scb_df.loc[j, 'item_title']) 
-                        for i, j in cross]
-        
-        # Create a DataFrame with the cartesian product and similarities
-        cross_df = pd.DataFrame(index=cross, data={'similarity': similarities})
-        
-        # Filter matches above the threshold
-        matches_chunk = cross_df[cross_df['similarity'] >= threshold]
-        
-        # Add to matches list
-        matches.extend([
-            (
-                chunk.loc[i, 'id'],  # WOS ID
-                chunk.loc[i, 'item_title'],  # WOS item title
-                scb_df.loc[j, 'item_title'],  # SCB item title
-                sim
-            ) 
-            for (i, j), sim in matches_chunk['similarity'].items()
-        ])
+    # Prepare the data for parallel processing
+    chunks = pd.read_csv(wos_file, chunksize=chunk_size)
+    chunk_scb_pairs = [(chunk, scb_df) for chunk in chunks]
+    
+    # Process chunks in parallel
+    matches = []
+    for chunk_matches in tqdm(pool.imap(calculate_similarities, chunk_scb_pairs), 
+                              desc=f"Processing chunks using {num_cores} cores"):
+        matches.extend(chunk_matches)
+    
+    # Close the pool
+    pool.close()
+    pool.join()
     
     # Create a DataFrame from the matches
     result_df = pd.DataFrame(matches, columns=['wos_id', 'wos_item_title', 'scb_item_title', 'similarity'])
@@ -137,6 +145,7 @@ def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=90, chunk_size=10
     # Save the results to CSV
     result_df.to_csv(output_file, index=False)
     print(f"Matching results saved to {output_file}")
+
 
 
 # Usage example
