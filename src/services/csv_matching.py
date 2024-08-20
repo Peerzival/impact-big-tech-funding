@@ -2,7 +2,7 @@ import pandas as pd
 from fuzzywuzzy import fuzz
 from tqdm import tqdm
 
-def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=90, chunk_size=10000):
+def fuzzy_match_csv(scb_file, wos_file, output_file, threshold=90, chunk_size=5000):
     """
     Perform fuzzy matching between two CSV files and save the results.
     
