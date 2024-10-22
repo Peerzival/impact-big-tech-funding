@@ -6,3 +6,8 @@ fuzzywuzzy
 python-Levenshtein
 openpyxl
 tqdm
+plotly
+pysankey
+matplotlib
+seaborn
+kaleido
