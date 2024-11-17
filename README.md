@@ -2,7 +2,8 @@
 
 ## The Repository
 
-This repository contains the code and datasets used in the paper "What Impact Does Big Tech Funding Have on AI Research? A Scholarly Document Analysis". My work analyzes citation patterns across various funding types to investigate trends in citation ages, highlighting the growing focus on recent literature at the expense of older, foundational works.
+This repository contains the code and datasets used in the paper "What Impact Does Big Tech Funding Have on AI Research? A Scholarly Document Analysis". My work analyzes the citational impact of Big Tech funding on
+AI research through a set of comprehensive analyses of citational patterns in scientific literature,highlighting growing tendency within the AI research community to engage with industry-funded work. However, this trend comes at the expense of diversity, as industry-funded research disproportionately cites itself while neglecting a broader range of older, potentially foundational work.
 
 ## Repository Structure
 
