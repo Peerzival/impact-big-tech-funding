@@ -2,12 +2,12 @@
 
 ## The Repository
 
-This repository contains the code and datasets used in the paper "What Impact Does Big Tech Funding Have on AI Research? A Scholarly Document Analysis". My work analyzes the citational impact of Big Tech funding on
+This repository contains the code and datasets used in the thesis "What Impact Does Big Tech Funding Have on AI Research? A Scholarly Document Analysis". My work analyzes the citational impact of Big Tech funding on
 AI research through a set of comprehensive analyses of citational patterns in scientific literature,highlighting growing tendency within the AI research community to engage with industry-funded work. However, this trend comes at the expense of diversity, as industry-funded research disproportionately cites itself while neglecting a broader range of older, potentially foundational work.
 
 ## Repository Structure
 
-- `data/`: Contains datasets by field, including citation relationships, grant information, institutional affiliations, and more.
+- `data/`: Contains datasets by age of citation, funding agencies per conference, category, and year, as well as cited fields, citation relationships, and more.
 - `figures/`: Directory containing generated figures and plots.
 - `analysis.ipynb`: Jupyter notebook with main plots and analysis from the paper.
 
@@ -31,7 +31,7 @@ Licensed under the [Apache 2.0](LICENSE.txt) license.
 
 ## Citation
 
-If you use the code or data from this repository in your research, please cite my paper:
+If you use the code or data from this repository in your research, please cite my thesis:
 
 ```bibtex
 @article{gnewuch2024BigTechFunding,
