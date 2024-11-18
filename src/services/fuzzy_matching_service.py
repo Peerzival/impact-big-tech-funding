@@ -49,9 +49,9 @@ def find_funding_agencies(excel_path, output_path, threshold=90):
 def clean_string(s):
     return re.sub(r'[^\w\s]', '', s.lower())
 
-def rank_funding_agencies(excel_path, output_path, threshold=85):
+def rank_funding_agencies(excel_path, output_path, threshold=90):
     print(f"Reading the Excel file from {excel_path}")
-    df1 = pd.read_excel(excel_path, sheet_name='SIGIR')
+    df1 = pd.read_excel(excel_path, sheet_name='AI')
     print(f"Funding agencies sheet read successfully. Number of rows: {len(df1)}")
     
     df2 = pd.read_excel(excel_path, sheet_name='unique funding agencies')
@@ -80,6 +80,6 @@ def rank_funding_agencies(excel_path, output_path, threshold=85):
     result_df = pd.DataFrame(list(results.items()), columns=['Funding Agency', 'Total Occurrences'])
     result_df = result_df.sort_values('Total Occurrences', ascending=False)
     
-    # Save the results to an Excel file
-    result_df.to_excel(output_path, index=False)
+    # Save the results to an CSV file
+    result_df.to_csv(output_path, index=False)
     print(f"Results saved to {output_path}")
